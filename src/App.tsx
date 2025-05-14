@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from "react";
 interface Message {
   text: string;
   sender: "user" | "ai";
+  loading?: boolean;
 }
 
 function MockLLM({ text }: { text: string }): Promise<string> {
@@ -123,13 +124,23 @@ function Input({ setQuestions }: InputProps) {
       ]);
       setInputText("");
 
+      const loadingMessage: Message = {
+        text: "Loading...",
+        sender: "ai",
+        loading: true,
+      };
+      setQuestions((prevQuestions) => [...prevQuestions, loadingMessage]);
+
       const aiResponse = getRandomElement(aiResponses);
       setTimeout(() => {
+        setQuestions((prevQuestions) =>
+          prevQuestions.filter((msg) => !(msg.sender === "ai" && msg.loading)),
+        );
         setQuestions((prevQuestions) => [
           ...prevQuestions,
           { text: aiResponse, sender: "ai" },
         ]);
-      }, 500);
+      }, 1500);
     }
   };
 
