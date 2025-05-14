@@ -1,13 +1,15 @@
 import React, { useRef, useState, useEffect } from "react";
 
-// Mock LLM function (now accepts and returns a string)
-function MockLLM({ text }) {
-  // Simulate a slight delay for the AI response
-  // In a real app, this would be an API call
+interface Message {
+  text: string;
+  sender: "user" | "ai";
+}
+
+function MockLLM({ text }: { text: string }): Promise<string> {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(`AI response to: "${text}"`);
-    }, 500); // Simulate 500ms delay
+    }, 500);
   });
 }
 
@@ -34,24 +36,28 @@ function Footer() {
     <div
       style={{
         height: "auto",
-        backgroundColor: "green",
+        backgroundColor: "#c4f2a7",
         fontFamily: "sans-serif",
         display: "flex",
-        justifyContent: "flex-start",
+        justifyContent: "center",
         alignItems: "center",
         padding: "1rem",
       }}
     >
-      <div>Cool</div>
+      <div>All rights reserved</div>
     </div>
   );
 }
 
-function ChatSection({ questions, setQuestions }) {
-  const chatContainerRef = useRef(null);
+interface ChatSectionProps {
+  questions: Message[];
+  setQuestions: React.Dispatch<React.SetStateAction<Message[]>>;
+}
+
+function ChatSection({ questions, setQuestions }: ChatSectionProps) {
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Scroll to the bottom whenever new messages are added
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
@@ -81,7 +87,7 @@ function ChatSection({ questions, setQuestions }) {
             alignSelf: message.sender === "user" ? "flex-start" : "flex-end",
             backgroundColor: message.sender === "user" ? "#e0f7fa" : "#f0f4c3",
             color: "#333",
-            wordBreak: "break-word", // Prevent long words from breaking layout
+            wordBreak: "break-word",
           }}
         >
           {message.text}
@@ -91,40 +97,94 @@ function ChatSection({ questions, setQuestions }) {
   );
 }
 
-export default function App() {
-  const [questions, setQuestions] = useState([]);
-  const randomQuestions = [
-    "What is the meaning of life?",
-    "Tell me a joke.",
-    "How does photosynthesis work?",
-    "What is the capital of France?",
-    "Who painted the Mona Lisa?",
-  ];
+interface InputProps {
+  setQuestions: React.Dispatch<React.SetStateAction<Message[]>>;
+}
 
-  const getRandomElement = (array) => {
+function Input({ setQuestions }: InputProps) {
+  const aiResponses = [
+    "That's an interesting question!",
+    "Let me think about that...",
+    "Here's what I found:",
+    "Could you please elaborate?",
+    "I'm not sure I understand.",
+  ];
+  const [inputText, setInputText] = useState("");
+
+  const getRandomElement = (array: string[]): string => {
     return array[Math.floor(Math.random() * array.length)];
   };
 
-  const handleHelloClick = async () => {
-    const randomQuestion = getRandomElement(randomQuestions);
-    setQuestions((prevQuestions) => [
-      ...prevQuestions,
-      { text: randomQuestion, sender: "user" },
-    ]);
+  const handleSendMessage = () => {
+    if (inputText.trim()) {
+      setQuestions((prevQuestions) => [
+        ...prevQuestions,
+        { text: inputText, sender: "user" },
+      ]);
+      setInputText("");
 
-    // Simulate getting an AI response
-    const aiResponse = await MockLLM({ text: randomQuestion });
-    setQuestions((prevQuestions) => [
-      ...prevQuestions,
-      { text: aiResponse, sender: "ai" },
-    ]);
+      const aiResponse = getRandomElement(aiResponses);
+      setTimeout(() => {
+        setQuestions((prevQuestions) => [
+          ...prevQuestions,
+          { text: aiResponse, sender: "ai" },
+        ]);
+      }, 500);
+    }
   };
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputText(event.target.value);
+  };
+
+  const handleInputKeyPress = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key === "Enter") {
+      handleSendMessage();
+    }
+  };
+
+  return (
+    <div style={{ padding: "1rem", display: "flex" }}>
+      <input
+        type="text"
+        value={inputText}
+        onChange={handleInputChange}
+        onKeyPress={handleInputKeyPress}
+        style={{
+          flexGrow: 1,
+          padding: "0.5rem",
+          borderRadius: "5px",
+          border: "1px solid #ccc",
+        }}
+        placeholder="Ask me anything..."
+      />
+      <button
+        onClick={handleSendMessage}
+        style={{
+          marginLeft: "0.5rem",
+          padding: "0.5rem 1rem",
+          borderRadius: "5px",
+          backgroundColor: "lightblue",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        Send
+      </button>
+    </div>
+  );
+}
+
+export default function App() {
+  const [questions, setQuestions] = useState<Message[]>([]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <Header />
       <ChatSection questions={questions} setQuestions={setQuestions} />
-      <button onClick={handleHelloClick}>Ask Something</button>
+      <Input setQuestions={setQuestions} />
       <Footer />
     </div>
   );
