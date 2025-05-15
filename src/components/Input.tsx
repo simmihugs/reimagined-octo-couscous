@@ -1,11 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
-import * as Types from "./types";
+import * as Types from "../utils/types";
+import { useAppStore } from "../utils/store";
 
-export default function Input({
-  setQuestions,
-  working,
-  setWorking,
-}: Types.InputProps) {
+export default function Input() {
+  const addQuestionToStore = useAppStore((state) => state.addQuestion);
+  const addAiResponseToStore = useAppStore((state) => state.addAiResponse);
+  const setWorking = useAppStore((state) => state.setWorking);
+  const working = useAppStore((state) => state.working);
+  const [inputText, setInputText] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const aiResponses = [
     "That's an interesting question!",
     "Let me think about that...",
@@ -13,8 +17,6 @@ export default function Input({
     "Could you please elaborate?",
     "I'm not sure I understand.",
   ];
-  const [inputText, setInputText] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!working && inputRef.current) {
@@ -30,10 +32,8 @@ export default function Input({
     if (!working) {
       setWorking(true);
       if (inputText.trim()) {
-        setQuestions((prevQuestions) => [
-          ...prevQuestions,
-          { text: inputText, sender: "user" },
-        ]);
+        const userMessage: Types.Message = { text: inputText, sender: "user" };
+        addQuestionToStore(userMessage); // Use addQuestion
         setInputText("");
 
         const loadingMessage: Types.Message = {
@@ -41,24 +41,30 @@ export default function Input({
           sender: "ai",
           loading: true,
         };
-        setQuestions((prevQuestions) => [...prevQuestions, loadingMessage]);
+        addAiResponseToStore(loadingMessage); // Use addAiResponse for loading message
 
-        const aiResponse = getRandomElement(aiResponses);
+        const aiResponseText = getRandomElement(aiResponses);
         setTimeout(() => {
-          setQuestions((prevQuestions) =>
-            prevQuestions.filter(
-              (msg) => !(msg.sender === "ai" && msg.loading),
-            ),
+          // We need to filter the loading message out of the state.
+          // We can either fetch the current questions and filter, or add a
+          // specific action to remove the loading message from the store.
+          // For simplicity here, we'll fetch and filter.
+          const currentQuestions = useAppStore.getState().questions;
+          const filteredQuestions = currentQuestions.filter(
+            (msg) => !(msg.sender === "ai" && msg.loading),
           );
-          setQuestions((prevQuestions) => [
-            ...prevQuestions,
-            { text: aiResponse, sender: "ai" },
-          ]);
+          useAppStore.getState().setQuestions(filteredQuestions); // Use setQuestions to update
+
+          const aiResponseMessage: Types.Message = {
+            text: aiResponseText,
+            sender: "ai",
+          };
+          addAiResponseToStore(aiResponseMessage); // Use addAiResponse for the actual response
           setWorking(false);
         }, 1500);
+      } else {
+        setWorking(false);
       }
-    } else {
-      setWorking(false);
     }
   };
 
