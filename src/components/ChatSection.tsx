@@ -58,8 +58,10 @@ export default function ChatSection() {
             >
               {message.sender === "user" ? (
                 <PiUser />
+              ) : questions.length - 1 !== index ? (
+                <PiBrainThin />
               ) : (
-                working && <PiBrainThin />
+                !working && <PiBrainThin />
               )}
             </span>
             {message.text}
