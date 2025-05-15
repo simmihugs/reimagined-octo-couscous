@@ -7,13 +7,13 @@ interface Message {
   loading?: boolean;
 }
 
-function MockLLM({ text }: { text: string }): Promise<string> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(`AI response to: "${text}"`);
-    }, 500);
-  });
-}
+// function MockLLM({ text }: { text: string }): Promise<string> {
+//   return new Promise((resolve) => {
+//     setTimeout(() => {
+//       resolve(`AI response to: "${text}"`);
+//     }, 500);
+//   });
+// }
 
 function Header() {
   return (
@@ -56,7 +56,62 @@ interface ChatSectionProps {
   setQuestions: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
-function ChatSection({ questions, setQuestions }: ChatSectionProps) {
+// function ChatSection({ questions, setQuestions }: ChatSectionProps) {
+//   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+//   useEffect(() => {
+//     if (chatContainerRef.current) {
+//       chatContainerRef.current.scrollTop =
+//         chatContainerRef.current.scrollHeight;
+//     }
+//   }, [questions]);
+
+//   return (
+//     <div
+//       ref={chatContainerRef}
+//       style={{
+//         flexGrow: 1,
+//         overflowY: "auto",
+//         padding: "1rem",
+//         display: "flex",
+//         flexDirection: "column",
+//         alignItems: "flex-start",
+//       }}
+//     >
+//       {questions.map((message, index) => (
+//         <div
+//           key={index}
+//           style={{
+//             maxWidth: "80%",
+//             padding: "0.8rem 1.2rem",
+//             borderRadius: "10px",
+//             marginBottom: "0.5rem",
+//             fontFamily:
+//               message.sender === "user" ? "Cormorant Garamond" : "Space Mono",
+//             fontSize: message.sender === "user" ? "20px" : "14px",
+//             alignSelf: message.sender === "user" ? "flex-start" : "flex-end",
+//             backgroundColor: message.sender === "user" ? "#e0f7fa" : "#f0f4c3",
+//             color: "#333",
+//             wordBreak: "break-word",
+//           }}
+//         >
+//           <div>
+//             <div
+//               style={{
+//                 fontSize: "20px",
+//               }}
+//             >
+//               {" "}
+//               {message.sender === "user" ? <PiUser /> : <PiBrainThin />}
+//             </div>
+//             {message.text}
+//           </div>
+//         </div>
+//       ))}
+//     </div>
+//   );
+// }
+function ChatSection({ questions }: ChatSectionProps) {
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -95,9 +150,17 @@ function ChatSection({ questions, setQuestions }: ChatSectionProps) {
             wordBreak: "break-word",
           }}
         >
-          {message.sender === "user" ? <PiUser /> : <PiBrainThin />}
-
-          {message.text}
+          <div>
+            <div
+              style={{
+                fontSize: "20px",
+              }}
+            >
+              {" "}
+              {message.sender === "user" ? <PiUser /> : <PiBrainThin />}
+            </div>
+            {message.text}
+          </div>
         </div>
       ))}
     </div>
