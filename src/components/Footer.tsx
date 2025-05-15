@@ -15,14 +15,12 @@ export default function Footer() {
     >
       <div
         style={{
-          display: "flex", // Add flex to this div
-          alignItems: "center", // Vertically align items in the center
+          display: "flex",
+          alignItems: "center",
         }}
       >
         <PiCopyright style={{ marginRight: "0.5rem" }} />{" "}
-        {/* Add some spacing */}
         <p style={{ margin: 0 }}> All rights reserved</p>{" "}
-        {/* Remove default paragraph margin */}
       </div>
     </div>
   );

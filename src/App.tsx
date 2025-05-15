@@ -8,12 +8,21 @@ import * as Types from "./components/types";
 
 export default function App() {
   const [questions, setQuestions] = useState<Types.Message[]>([]);
+  const [working, setWorking] = useState(false);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <Header />
-      <ChatSection questions={questions} setQuestions={setQuestions} />
-      <Input setQuestions={setQuestions} />
+      <ChatSection
+        working={working}
+        questions={questions}
+        setQuestions={setQuestions}
+      />
+      <Input
+        working={working}
+        setWorking={setWorking}
+        setQuestions={setQuestions}
+      />
       <Footer />
     </div>
   );

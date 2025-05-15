@@ -1,7 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import * as Types from "./types";
 
-export default function Input({ setQuestions }: Types.InputProps) {
+export default function Input({
+  setQuestions,
+  working,
+  setWorking,
+}: Types.InputProps) {
   const aiResponses = [
     "That's an interesting question!",
     "Let me think about that...",
@@ -10,7 +14,6 @@ export default function Input({ setQuestions }: Types.InputProps) {
     "I'm not sure I understand.",
   ];
   const [inputText, setInputText] = useState("");
-  const [working, setWorking] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {

@@ -2,7 +2,10 @@ import React, { useRef, useEffect } from "react";
 import * as Types from "./types";
 import { PiBrainThin, PiUser } from "react-icons/pi";
 
-export default function ChatSection({ questions }: Types.ChatSectionProps) {
+export default function ChatSection({
+  questions,
+  working,
+}: Types.ChatSectionProps) {
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -52,7 +55,11 @@ export default function ChatSection({ questions }: Types.ChatSectionProps) {
               alignItems: "center",
             }}
           >
-            {message.sender === "user" ? <PiUser /> : <PiBrainThin />}
+            {message.sender === "user" ? (
+              <PiUser />
+            ) : (
+              !working && <PiBrainThin />
+            )}
           </span>
           {message.text}
         </div>
