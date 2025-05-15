@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
+import { PiBrainThin, PiUser } from "react-icons/pi";
 
 interface Message {
   text: string;
@@ -85,12 +86,17 @@ function ChatSection({ questions, setQuestions }: ChatSectionProps) {
             padding: "0.8rem 1.2rem",
             borderRadius: "10px",
             marginBottom: "0.5rem",
+            fontFamily:
+              message.sender === "user" ? "Cormorant Garamond" : "Space Mono",
+            fontSize: message.sender === "user" ? "20px" : "14px",
             alignSelf: message.sender === "user" ? "flex-start" : "flex-end",
             backgroundColor: message.sender === "user" ? "#e0f7fa" : "#f0f4c3",
             color: "#333",
             wordBreak: "break-word",
           }}
         >
+          {message.sender === "user" ? <PiUser /> : <PiBrainThin />}
+
           {message.text}
         </div>
       ))}
@@ -162,7 +168,7 @@ function Input({ setQuestions }: InputProps) {
         type="text"
         value={inputText}
         onChange={handleInputChange}
-        onKeyPress={handleInputKeyPress}
+        onKeyDown={handleInputKeyPress}
         style={{
           flexGrow: 1,
           padding: "0.5rem",
