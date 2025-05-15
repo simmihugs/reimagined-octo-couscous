@@ -1,0 +1,40 @@
+# Ignore Python cache and bytecode
+__pycache__/
+*.py[cod]
+*.so
+
+# Ignore virtual environments
+venv/
+.env/
+.venv/
+
+# Ignore model files (commonly large)
+*.bin
+*.pt
+*.ckpt
+*.h5
+*.pb
+*.onnx
+
+# Ignore Hugging Face and other ML cache directories
+.cache/
+.cache/*
+.huggingface/
+huggingface/
+models/
+models/*
+
+# Ignore logs and outputs
+*.log
+logs/
+outputs/
+runs/
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
