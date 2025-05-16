@@ -1,15 +1,16 @@
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 
 
 model = None
 tokenizer = None
-
 MODEL_NAME = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 QUANTIZED = True
+
 
 class QueryRequest(BaseModel):
     query: str
@@ -29,18 +30,16 @@ async def lifespan(app: FastAPI):
     finally:
         print("Application shutdown")
 
+
 app = FastAPI(lifespan=lifespan)
 
-# @app.on_event("startup")
-# async def startup_event():
-#     global model, tokenizer
-#     try:
-#         tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-#         model = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to("cpu")
-#         model.eval()
-#         print(f"Model {MODEL_NAME} loaded successfully on CPU")
-#     except Exception as e:
-#         print(f"Error loading model: {e}")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://192.168.178.58:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 async def generate_response(prompt: str):
@@ -60,11 +59,11 @@ async def generate_response(prompt: str):
         raise HTTPException(status_code=500, detail=f"Error during inference: {e}")
 
 
-
 @app.post("/query")
 async def query_model(request: QueryRequest):
     response = await generate_response(request.query)
     return {"response": response}
+
 
 if __name__ == "__main__":
     import uvicorn

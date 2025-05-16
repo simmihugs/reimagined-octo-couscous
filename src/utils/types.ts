@@ -4,6 +4,10 @@ export interface Message {
   loading?: boolean;
 }
 
+export interface QueryResponse {
+  response: string;
+}
+
 export interface ChatSectionProps {
   questions: Message[];
   setQuestions: React.Dispatch<React.SetStateAction<Message[]>>;

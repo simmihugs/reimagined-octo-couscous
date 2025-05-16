@@ -8,6 +8,8 @@ interface AppState {
   addAiResponse: (response: Types.Message) => void;
   working: boolean;
   setWorking: (isWorking: boolean) => void;
+  error: string | null;
+  setError: (isError: string | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -19,4 +21,6 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({ questions: [...state.questions, response] })),
   working: false,
   setWorking: (isWorking) => set({ working: isWorking }),
+  error: null,
+  setError: (isError) => set({ error: isError }),
 }));
