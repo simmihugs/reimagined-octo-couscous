@@ -1,18 +1,18 @@
 export interface Message {
-  text: string;
-  sender: "user" | "ai";
-  loading?: boolean;
+    text: string;
+    sender: "user" | "ai";
+    status: "finished" | "loading" | "inProgress";
 }
 
 export interface QueryResponse {
-  response: string;
+    response: string;
 }
 
 export interface ChatSectionProps {
-  questions: Message[];
-  setQuestions: React.Dispatch<React.SetStateAction<Message[]>>;
+    questions: Message[];
+    setQuestions: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
 export interface InputProps {
-  setQuestions: React.Dispatch<React.SetStateAction<Message[]>>;
+    setQuestions: React.Dispatch<React.SetStateAction<Message[]>>;
 }

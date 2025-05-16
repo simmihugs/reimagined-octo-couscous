@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { PiBrainThin, PiUser } from "react-icons/pi";
 import { useAppStore } from "../utils/store";
+import * as Types from "../utils/types"; // Import your types
 
 export default function ChatSection() {
   const questions = useAppStore((state) => state.questions);
@@ -27,7 +28,7 @@ export default function ChatSection() {
       }}
     >
       {questions &&
-        questions.map((message, index) => (
+        questions.map((message: Types.Message, index) => (
           <div
             key={index}
             style={{
@@ -58,13 +59,13 @@ export default function ChatSection() {
             >
               {message.sender === "user" ? (
                 <PiUser />
-              ) : questions.length - 1 !== index ? (
-                <PiBrainThin />
               ) : (
-                !working && <PiBrainThin />
+                <PiBrainThin />
               )}
             </span>
             {message.text}
+            {message.status === 'loading' && ' (Loading...)'}
+            {message.status === 'inProgress' && ' (In Progress...)'}
           </div>
         ))}
     </div>

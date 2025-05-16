@@ -57,6 +57,7 @@ async def generate_response_stream(prompt: str):
     thread.start()
 
     for new_text in streamer:
+        print(new_text)
         yield new_text
         await asyncio.sleep(0.01)
 
