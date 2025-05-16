@@ -32,7 +32,7 @@ export default function Input() {
                 };
                 addAiResponseToStore(loadingMessage);
 
-                const aiResponseText = await LLM.queryLLM(inputText);
+                const aiResponseText = await LLM.queryLLM(inputText);                
                 console.log(aiResponseText);
                 const currentQuestions = useAppStore.getState().questions;
                 const filteredQuestions = currentQuestions.filter(
@@ -46,6 +46,7 @@ export default function Input() {
                 };
                 addAiResponseToStore(aiResponseMessage);
                 setWorking(false);
+                const audio = await LLM.queryTTS(aiResponseText);
             } else {
                 setWorking(false);
             }
