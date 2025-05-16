@@ -11,23 +11,11 @@ export default function Input() {
     const [inputText, setInputText] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // const aiResponses = [
-    //     "That's an interesting question!",
-    //     "Let me think about that...",
-    //     "Here's what I found:",
-    //     "Could you please elaborate?",
-    //     "I'm not sure I understand.",
-    // ];
-
     useEffect(() => {
         if (!working && inputRef.current) {
             inputRef.current.focus();
         }
     }, [working]);
-
-    // const getRandomElement = (array: string[]): string => {
-    //     return array[Math.floor(Math.random() * array.length)];
-    // };
 
     async function handleSendMessage() {
         if (!working) {
@@ -58,22 +46,6 @@ export default function Input() {
                 };
                 addAiResponseToStore(aiResponseMessage);
                 setWorking(false);
-
-                // const aiResponseText = getRandomElement(aiResponses);
-                // setTimeout(() => {
-                //   const currentQuestions = useAppStore.getState().questions;
-                //   const filteredQuestions = currentQuestions.filter(
-                //     (msg) => !(msg.sender === "ai" && msg.loading),
-                //   );
-                //   useAppStore.getState().setQuestions(filteredQuestions);
-
-                //   const aiResponseMessage: Types.Message = {
-                //     text: aiResponseText,
-                //     sender: "ai",
-                //   };
-                //   addAiResponseToStore(aiResponseMessage);
-                //   setWorking(false);
-                // }, 1500);
             } else {
                 setWorking(false);
             }
