@@ -1,55 +1,48 @@
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, Body
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 
-app = FastAPI()
+
 model = None
 tokenizer = None
 
-MODEL_NAME = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"  # Example: Replace with a suitable quantized model
-QUANTIZED = True  # Indicate if you are using a quantized model
+MODEL_NAME = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+QUANTIZED = True
 
-#@app.on_event("startup")
-#async def startup_event():
-#    global model, tokenizer
-#    try:
-#        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-#        if QUANTIZED:
-#            # This is a placeholder - the actual loading of a quantized model might differ
-#            # depending on the quantization library and how the model is provided.
-#            # You might need to use specific functions from libraries like 'bitsandbytes'
-#            # or a library providing Qora support.
-#            model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, load_in_4bit=True, device_map='cpu')
-#        else:
-#            model = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to("cpu")
-#        model.eval()
-#        print(f"Model {MODEL_NAME} loaded successfully on CPU (Quantized: {QUANTIZED})")
-#    except Exception as e:
-#        print(f"Error loading model: {e}")
-@app.on_event("startup")
-async def startup_event():
+class QueryRequest(BaseModel):
+    query: str
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     global model, tokenizer
     try:
         tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
         model = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to("cpu")
-        model.eval()  # Set the model to evaluation mode
+        model.eval()
         print(f"Model {MODEL_NAME} loaded successfully on CPU")
+        yield
     except Exception as e:
         print(f"Error loading model: {e}")
+    finally:
+        print("Application shutdown")
 
-#async def generate_response(prompt: str):
-#    if model is None or tokenizer is None:
-#        raise HTTPException(status_code=503, detail="Model not loaded yet.")
-#
-#    try:
-#        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-#        with torch.no_grad():
-#            outputs = model.generate(**inputs, max_new_tokens=150, num_return_sequences=1)
-#        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-#        return response
-#    except Exception as e:
-#        raise HTTPException(status_code=500, detail=f"Error during inference: {e}")
+app = FastAPI(lifespan=lifespan)
+
+# @app.on_event("startup")
+# async def startup_event():
+#     global model, tokenizer
+#     try:
+#         tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+#         model = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to("cpu")
+#         model.eval()
+#         print(f"Model {MODEL_NAME} loaded successfully on CPU")
+#     except Exception as e:
+#         print(f"Error loading model: {e}")
+
+
 async def generate_response(prompt: str):
     if model is None or tokenizer is None:
         raise HTTPException(status_code=503, detail="Model not loaded yet.")
@@ -60,17 +53,13 @@ async def generate_response(prompt: str):
         with torch.no_grad():
             outputs = model.generate(**inputs, max_new_tokens=150, num_return_sequences=1)
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        # Remove the prompt from the response if it's still there
         if formatted_prompt in response:
             response = response.replace(formatted_prompt, "").lstrip("\n")
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during inference: {e}")
 
-class QueryRequest(BaseModel):
-    query: str
 
-from pydantic import BaseModel
 
 @app.post("/query")
 async def query_model(request: QueryRequest):
