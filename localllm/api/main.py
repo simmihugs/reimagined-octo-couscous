@@ -2,9 +2,11 @@ from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from fastapi.responses import StreamingResponse
+from transformers import AutoTokenizer, AutoModelForCausalLM, TextIteratorStreamer
 import torch
-
+from threading import Thread
+import asyncio
 
 model = None
 tokenizer = None
@@ -42,26 +44,33 @@ app.add_middleware(
 )
 
 
-async def generate_response(prompt: str):
+async def generate_response_stream(prompt: str):
     if model is None or tokenizer is None:
         raise HTTPException(status_code=503, detail="Model not loaded yet.")
 
-    try:
-        formatted_prompt = f"<|user|>\n{prompt}<|assistant|>\n"
-        inputs = tokenizer(formatted_prompt, return_tensors="pt").to(model.device)
-        with torch.no_grad():
-            outputs = model.generate(**inputs, max_new_tokens=150, num_return_sequences=1)
-        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        if formatted_prompt in response:
-            response = response.replace(formatted_prompt, "").lstrip("\n")
-        return response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error during inference: {e}")
+    formatted_prompt = f"<|user|>\n{prompt}<|assistant|>\n"
+    inputs = tokenizer(formatted_prompt, return_tensors="pt").to(model.device)
+    streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
+    generation_kwargs = dict(inputs, streamer=streamer, max_new_tokens=150, num_return_sequences=1)
+
+    thread = Thread(target=model.generate, kwargs=generation_kwargs)
+    thread.start()
+
+    for new_text in streamer:
+        yield new_text
+        await asyncio.sleep(0.01)
+
+
+@app.post("/stream-query")
+async def stream_model(request: QueryRequest):
+    return StreamingResponse(generate_response_stream(request.query), media_type="text/plain")
 
 
 @app.post("/query")
 async def query_model(request: QueryRequest):
-    response = await generate_response(request.query)
+    response = ""
+    async for chunk in generate_response_stream(request.query):
+        response += chunk
     return {"response": response}
 
 
