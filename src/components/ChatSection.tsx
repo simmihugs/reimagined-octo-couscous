@@ -1,11 +1,10 @@
-import React, { useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { PiBrainThin, PiUser } from "react-icons/pi";
 import { useAppStore } from "../utils/store";
-import * as Types from "../utils/types"; // Import your types
+import * as Types from "../utils/types";
 
 export default function ChatSection() {
-  const questions = useAppStore((state) => state.questions);
-  const working = useAppStore((state) => state.working);
+  const questions = useAppStore((state) => state.questions);  
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,8 +63,6 @@ export default function ChatSection() {
               )}
             </span>
             {message.text}
-            {message.status === 'loading' && ' (Loading...)'}
-            {message.status === 'inProgress' && ' (In Progress...)'}
           </div>
         ))}
     </div>

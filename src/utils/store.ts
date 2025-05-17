@@ -14,7 +14,7 @@ interface AppState {
   setError: (isError: string | null) => void;
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = create<AppState>((set) => ({
   questions: [],
   setQuestions: (newQuestions) => set({ questions: newQuestions }),
   addQuestion: (question) =>
@@ -24,7 +24,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   updateAiResponse: (textChunk) =>
     set((state) => ({
       questions: state.questions.map((msg) =>
-        msg.sender === 'ai' && msg.status !== 'finished' // Target loading or inProgress
+        msg.sender === 'ai' && msg.status !== 'finished' 
           ? { ...msg, text: (msg.text === 'Loading...' ? textChunk : msg.text + textChunk), status: 'inProgress' }
           : msg
       ),

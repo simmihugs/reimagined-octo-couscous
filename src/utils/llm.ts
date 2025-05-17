@@ -1,8 +1,11 @@
 import * as Types from "./types";
 
+//const ip = "localhost"
+const ip = "192.168.178.22";
+
 export async function queryLLM(query: string): Promise<string> {
     try {
-        const response = await fetch('http://localhost:8000/query', {
+        const response = await fetch(`http://${ip}:8000/query`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -24,7 +27,7 @@ export async function queryLLM(query: string): Promise<string> {
 
 export async function streamQueryLLM(query: string, onChunkReceived: (chunk: string) => void): Promise<void> {
   try {
-    const response = await fetch('http://localhost:8000/stream-query', {
+      const response = await fetch(`http://${ip}:8000/stream-query`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,7 +67,7 @@ export async function streamQueryLLM(query: string, onChunkReceived: (chunk: str
 
 export async function queryTTS(text: string): Promise<void> {
   try {
-    const response = await fetch('http://localhost:8001/stream-audio', {
+      const response = await fetch(`http://${ip}:8001/stream-audio`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
