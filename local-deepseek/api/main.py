@@ -1,9 +1,11 @@
-import time
-import gc
-from random import randint
-from typing import List, Callable, Optional
+from typing import Callable, Optional, AsyncGenerator
 from huggingface_hub import hf_hub_download
 from llama_cpp import Llama
+from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from contextlib import asynccontextmanager
 
 
 def deepseek_model_path() -> str:
@@ -16,25 +18,6 @@ def deepseek_model_path() -> str:
         local_dir="models",
         force_download=False,
     )
-
-
-def zephyr_model_path() -> str:
-    """
-    Download the Zephyr 7B model (Q4 quantization).
-    """
-    return hf_hub_download(
-        repo_id="TheBloke/zephyr-7B-beta-GGUF",
-        filename="zephyr-7b-beta.Q4_K_M.gguf",
-        local_dir="models",
-        force_download=False,
-    )
-
-
-def zephyr_prompt(question: str) -> str:
-    """
-    Zephyr prompt format (simple QA).
-    """
-    return f"Q: {question}\nA:"
 
 
 def deepseek_prompt(question: str) -> str:
@@ -66,163 +49,73 @@ class Model:
             verbose=self.verbose,
         )
 
-    def answer_my_question(self, question: str, time_it: bool = False) -> str:
+    def query(self, question: str) -> str:
         prompt = self.prompt_formatter(question)
-        start: Optional[float] = None
-        end: Optional[float] = None
-        if time_it:
-            start = time.time()
         response = self.llm(
             prompt, max_tokens=self.max_tokens, temperature=self.temperatur
         )
-        if time_it:
-            end = time.time()
-        if time_it and start is not None and end is not None:
-            print(f"\nDuration: {end - start:.2f} seconds")
-
         if isinstance(response, dict) and "choices" in response:
             return response["choices"][0]["text"].strip()
         return str(response)
 
-    def stream_the_answer_to_my_question(
-        self, question: str, time_it: bool = False
-    ) -> None:
+    async def query_stream(self, question: str) -> AsyncGenerator[str, None]:
         prompt = self.prompt_formatter(question)
-        start: Optional[float] = None
-        end: Optional[float] = None
-        if time_it:
-            start = time.time()
         for chunk in self.llm(
             prompt, max_tokens=self.max_tokens, stream=True, temperature=self.temperatur
         ):
             if isinstance(chunk, dict) and "choices" in chunk:
-                print(chunk["choices"][0]["text"].strip())
-            if time_it and end is None:
-                end = time.time()
-        if time_it and start is not None and end is not None:
-            print(f"\nDuration: {end - start:.2f} seconds")
+                yield chunk["choices"][0]["text"]
 
 
-def test1():
-    questions: List[str] = [
-        "What is the capital from france?",
-        "How old was Sherlock Holmes in the books?",
-    ]
-
-    question: str = questions[randint(0, len(questions) - 1)]
-    print(f"Q: {question}")
-
-    deepseek = Model(
-        model_path_func=deepseek_model_path,
-        prompt_formatter=deepseek_prompt,
-        n_ctx=int(8192 / 2),
-        verbose=False,
-    )
-
-    response: str = deepseek.answer_my_question(question)
-    print(response)
-
-    del deepseek
-    gc.collect()
-    print("memory freed")
-
-    question: str = questions[randint(0, len(questions) - 1)]
-    print(f"Q: {question}")
-
-    zephyr = Model(
-        model_path_func=zephyr_model_path,
-        prompt_formatter=zephyr_prompt,
-        n_ctx=8192,
-        verbose=False,
-    )
-
-    response: str = zephyr.answer_my_question(question)
-    print(response)
-
-    del zephyr
-    gc.collect()
-    print("memory freed")
+model: Optional[Model] = None
 
 
-def test2():
-    question: str = "What should i eat tonight?"
-    print(question)
-
-    deepseek = Model(
-        model_path_func=deepseek_model_path,
-        prompt_formatter=deepseek_prompt,
-        n_ctx=int(8192 / 2),
-        verbose=False,
-        max_tokens=1024,
-    )
-
-    response: str = deepseek.answer_my_question(question)
-    print(response)
+class QueryRequest(BaseModel):
+    query: str
 
 
-def test3():
-    question: str = "What should i eat tonight?"
-    print(question)
-
-    deepseek = Model(
-        model_path_func=deepseek_model_path,
-        prompt_formatter=deepseek_prompt,
-        n_ctx=int(8192 / 2),
-        verbose=False,
-        max_tokens=1024,
-    )
-
-    deepseek.stream_the_answer_to_my_question(question, time_it=True)
-
-
-def test4():
-    question: str = "What should i eat tonight?"
-    print(question)
-
-    deepseek = Model(
-        model_path_func=deepseek_model_path,
-        prompt_formatter=deepseek_prompt,
-        n_ctx=int(8192 / 2),
-        verbose=False,
-        max_tokens=1024,
-        temperatur=0.7,
-    )
-
-    deepseek.stream_the_answer_to_my_question(question, time_it=True)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global model
+    try:
+        model = Model(
+            model_path_func=deepseek_model_path,
+            prompt_formatter=deepseek_prompt,
+            n_ctx=4096,
+            verbose=False,
+            max_tokens=1024,
+            temperatur=1.7,
+        )
+        yield
+    except Exception as e:
+        print(f"Error loading model: {e}")
+    finally:
+        print("Application shutdown")
 
 
-def test5(temperatur: float):
-    question: str = "What should i eat tonight?"
-    print(question)
+app = FastAPI(lifespan=lifespan)
 
-    deepseek = Model(
-        model_path_func=deepseek_model_path,
-        prompt_formatter=deepseek_prompt,
-        n_ctx=int(8192 / 2),
-        verbose=False,
-        max_tokens=1024,
-        temperatur=temperatur,
-    )
-
-    response: str = deepseek.answer_my_question(question, time_it=True)
-    print(response)
-    del deepseek
-    gc.collect()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-def test6():
-    question: str = "What should i eat tonight?"
-    print(question)
+@app.post("/stream-query")
+async def stream_model(request: QueryRequest):
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded yet.")
 
-    deepseek = Model(
-        model_path_func=deepseek_model_path,
-        prompt_formatter=deepseek_prompt,
-        n_ctx=int(8192 / 2),
-        verbose=False,
-        max_tokens=1024,
-        temperatur=1.7,
-    )
-    deepseek.stream_the_answer_to_my_question(question, time_it=True)
+    return StreamingResponse(model.query_stream(request.query), media_type="text/plain")
 
-if __name__ == "__main__":
-    test6()
+
+@app.post("/query")
+async def query_model(request: QueryRequest):
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded yet.")
+
+    response = model.query(request.query)
+    return {"response": response}
