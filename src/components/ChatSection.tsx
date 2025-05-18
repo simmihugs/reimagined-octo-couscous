@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { PiBrainThin, PiUser } from "react-icons/pi";
 import { useAppStore } from "../utils/store";
 import * as Types from "../utils/types";
+import { LoadingDots } from "./LoadingDots";
 
 export default function ChatSection() {
   const questions = useAppStore((state) => state.questions);  
@@ -62,7 +63,7 @@ export default function ChatSection() {
                 <PiBrainThin />
               )}
             </span>
-            {message.text}
+                {message.status === "loading" ? <LoadingDots /> : message.text}
           </div>
         ))}
     </div>
